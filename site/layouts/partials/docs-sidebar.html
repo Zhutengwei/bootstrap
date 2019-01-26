@@ -6,21 +6,37 @@
 </form>
 
 <nav class="collapse bd-links" id="bd-docs-nav">
-  {{ $currentPage := . }}
-  {{ range .Site.Menus.docs }}
+  {{- $url := (split .URL "/") -}}
+  {{- $page_slug := index $url (sub (len $url) 2) -}}
+  {{- range $i, $group := .Site.Data.nav -}}
+    {{- $link := $group.title -}}
+    {{- $link_slug := $link | urlize -}}
+    {{- if $group.pages -}}
+      {{- $link = index $group.pages 0 -}}
+      {{- $link_slug = $link.title | urlize -}}
+    {{- end -}}
+    {{- $group_slug := $group.title | urlize -}}
+    {{- $active_group := (eq $.Page.Params.group $group_slug) }}
 
-  <div class="bd-toc-item{{ if or ($currentPage.IsMenuCurrent "docs" .) ($currentPage.HasMenuCurrent "docs" .) }} active{{ end }}">
-    <a class="bd-toc-link" href="{{ .URL }}">{{ .Name }}</a>
+    <div class="bd-toc-item{{ if eq $active_group true }} active{{ end }}">
+        <a class="bd-toc-link" href="/docs/{{ $.Site.Params.docs_version }}/{{ $group_slug }}/{{ if $group.pages }}{{ $link_slug }}/{{ end }}">
+          {{ $group.title }}
+        </a>
 
-    {{ if .HasChildren }}
-    <ul class="nav bd-sidenav">
-      {{ range .Children }}
-      <li{{ if ($currentPage.IsMenuCurrent "docs" .) }} class="active bd-sidenav-active"{{ end }}>
-        <a href="{{ .URL }}">{{ .Name }}</a>
-      </li>
-      {{ end }}
-    </ul>
-    {{ end }}
-  </div>
-  {{ end }}
+        {{- if and (eq $active_group true) ($group.pages) }}
+        <ul class="nav bd-sidenav">
+          {{ range $j, $doc := $group.pages -}}
+            {{- $doc_slug := $doc.title | urlize -}}
+            {{- $active_page := (and ($active_group) (eq $page_slug $doc_slug)) -}}
+
+            <li{{ if and ($active_group) ($active_page) }} class="active bd-sidenav-active"{{ end }}>
+              <a href="/docs/{{ $.Site.Params.docs_version }}/{{ $group_slug }}/{{ $doc_slug }}/">
+                {{ $doc.title }}
+              </a>
+            </li>
+          {{ end }}
+        </ul>
+        {{- end }}
+      </div>
+  {{- end }}
 </nav>
